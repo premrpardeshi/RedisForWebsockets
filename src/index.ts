@@ -44,20 +44,20 @@ wss.on("connection", function connection(ws) {
               if (user.room === room) {
                 const ws = user.socket;
                 ws.send(JSON.stringify(msg));
-                console.log("Message sent: " + msg + " to " + room);
+                // console.log("Message sent: " + msg + " to " + room);
               }
             });
           }
         });
         mp.set(room, 1);
-        console.log(
-          room + " subscribed by total=" + mp.get(room) + " with id " + id
-        );
+        // console.log(
+        //   room + " subscribed by total=" + mp.get(room) + " with id " + id
+        // );
       } else {
         mp.set(room, (mp.get(room) ?? 0) + 1);
-        console.log(
-          room + " subscribed by total=" + mp.get(room) + " with id " + id
-        );
+        // console.log(
+          // room + " subscribed by total=" + mp.get(room) + " with id " + id
+        // );
       }
     } else if (message.type === "unsubscribe") {
       const room = message.room;
