@@ -6,16 +6,19 @@ publisher.connect();
 const subscriber = createClient();
 subscriber.connect();
 
+let counter = 1;
+
 const mp: Map<string, number> = new Map();
 
 const wss = new WebSocketServer({ port: 8080 });
 
 interface Info {
+  id: number;
   room: string;
   socket: WebSocket;
 }
 
-const users: Info[] = [];
+let users: Info[] = [];
 
 wss.on("connection", function connection(ws) {
   ws.on("error", console.error);
@@ -26,9 +29,10 @@ wss.on("connection", function connection(ws) {
     const message = JSON.parse(data);
 
     if (message.type === "subscribe") {
+      const id = counter++;
       const room = message.room;
       const socket = ws;
-      users.push({ room, socket });
+      users.push({ id, room, socket });
 
       if (!mp.has(room)) {
         subscriber.subscribe(room, (message) => {
@@ -46,13 +50,25 @@ wss.on("connection", function connection(ws) {
           }
         });
         mp.set(room, 1);
-        console.log(room + " subscribed by total=" + mp.get(room));
+        console.log(
+          room + " subscribed by total=" + mp.get(room) + " with id " + id
+        );
       } else {
         mp.set(room, (mp.get(room) ?? 0) + 1);
-        console.log(room + " subscribed by total=" + mp.get(room));
+        console.log(
+          room + " subscribed by total=" + mp.get(room) + " with id " + id
+        );
       }
     } else if (message.type === "unsubscribe") {
       const room = message.room;
+      const id = message.id;
+
+      console.log(users);
+      
+      users = users.filter((user) => user.id != id || user.room != room);
+
+      console.log("after filter "+users);
+
       if (mp.has(room)) {
         mp.set(room, (mp.get(room) ?? 1) - 1);
         if (mp.get(room) == 0) {

@@ -6,18 +6,20 @@ const publisher = (0, redis_1.createClient)();
 publisher.connect();
 const subscriber = (0, redis_1.createClient)();
 subscriber.connect();
+let counter = 1;
 const mp = new Map();
 const wss = new ws_1.WebSocketServer({ port: 8080 });
-const users = [];
+let users = [];
 wss.on("connection", function connection(ws) {
     ws.on("error", console.error);
     ws.on("message", function message(data) {
         var _a, _b;
         const message = JSON.parse(data);
         if (message.type === "subscribe") {
+            const id = counter++;
             const room = message.room;
             const socket = ws;
-            users.push({ room, socket });
+            users.push({ id, room, socket });
             if (!mp.has(room)) {
                 subscriber.subscribe(room, (message) => {
                     const data = JSON.parse(message);
@@ -34,18 +36,22 @@ wss.on("connection", function connection(ws) {
                     }
                 });
                 mp.set(room, 1);
-                console.log(room + " subscribed by total=" + mp.get(room));
+                console.log(room + " subscribed by total=" + mp.get(room) + " with id " + id);
             }
             else {
                 mp.set(room, ((_a = mp.get(room)) !== null && _a !== void 0 ? _a : 0) + 1);
-                console.log(room + " subscribed by total=" + mp.get(room));
+                console.log(room + " subscribed by total=" + mp.get(room) + " with id " + id);
             }
         }
         else if (message.type === "unsubscribe") {
             const room = message.room;
+            const id = message.id;
+            console.log(users);
+            users = users.filter((user) => user.id != id || user.room != room);
+            console.log("after filter " + users);
             if (mp.has(room)) {
                 mp.set(room, ((_b = mp.get(room)) !== null && _b !== void 0 ? _b : 1) - 1);
-                if (mp.get(room) == 1) {
+                if (mp.get(room) == 0) {
                     subscriber.unsubscribe(room);
                     console.log(room + " was unsubscribed by all");
                 }
