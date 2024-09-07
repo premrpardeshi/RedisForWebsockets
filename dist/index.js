@@ -43,11 +43,12 @@ wss.on("connection", function connection(ws) {
         }
         else if (message.type === "unsubscribe") {
             const room = message.room;
-            const socket = ws;
             if (mp.has(room)) {
                 mp.set(room, ((_b = mp.get(room)) !== null && _b !== void 0 ? _b : 1) - 1);
-                if (mp.get(room) == 1)
+                if (mp.get(room) == 1) {
                     subscriber.unsubscribe(room);
+                    console.log(room + " was unsubscribed by all");
+                }
             }
         }
         else if (message.type === "sendMessage") {
